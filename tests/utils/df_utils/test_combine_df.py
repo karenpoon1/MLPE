@@ -134,8 +134,6 @@ class TestCombineDf(unittest.TestCase):
         data_df1 = pd.DataFrame(data1, columns=['q1', 'q2', 'q3', 'q4'])
 
         combined_df = combine_df([data_df1])
-        print(data_df1)
-        print(combined_df)
 
         # True
         true_combined = [

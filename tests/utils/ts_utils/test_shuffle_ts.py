@@ -1,7 +1,7 @@
 import unittest
 import torch
 
-from utils.ts_utils.shuffle_ts import shuffle_1D_vect_ts, shuffle_2D_vect_ts
+from src.utils.ts_utils.shuffle_ts import shuffle_1D_vect_ts, shuffle_2D_vect_ts
 
 
 class TestShuffleTs(unittest.TestCase):
