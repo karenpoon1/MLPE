@@ -123,6 +123,31 @@ class TestCombineDf(unittest.TestCase):
 
         self.assertTrue(combined_df.equals(true_df))
 
+    def test_combine_df_4(self):
+        # Testcase: remains unchanged after combined if arguement contains only one data df
+        data1 = [
+            [1.0, 1.0, 0.0, 1.0],
+            [1.0, 0.0, 1.0, 0.0],
+            [1.0, 1.0, 0.0, 1.0],
+            [1.0, 1.0, 1.0, 0.0]
+        ]
+        data_df1 = pd.DataFrame(data1, columns=['q1', 'q2', 'q3', 'q4'])
+
+        combined_df = combine_df([data_df1])
+        print(data_df1)
+        print(combined_df)
+
+        # True
+        true_combined = [
+            [1.0, 1.0, 0.0, 1.0],
+            [1.0, 0.0, 1.0, 0.0],
+            [1.0, 1.0, 0.0, 1.0],
+            [1.0, 1.0, 1.0, 0.0]
+        ]
+        true_combined_df = pd.DataFrame(true_combined, columns=['q1', 'q2', 'q3', 'q4'])
+
+        self.assertTrue(combined_df.equals(true_combined_df))
+
 
 if __name__ == '__main__':
     unittest.main()
