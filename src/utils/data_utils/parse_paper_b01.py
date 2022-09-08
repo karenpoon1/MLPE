@@ -1,30 +1,51 @@
+# Parse csv #0 and #1 only
+
 import pandas as pd
 from typing import List, Tuple
 
+
+def parse_paper_b0():
+    data_dfs, meta_dfs = [], []
+    papers = ['2017_1H_b0']
+    for paper in papers:
+        data_df, meta_df = parse_paper(paper)
+        data_dfs.append(data_df)
+        meta_dfs.append(meta_df)
+    return data_dfs, meta_dfs
+
+def parse_paper_b1():
+    data_dfs, meta_dfs = [], []
+    papers = ['2017_1H_b1', '2017_2H_b1', '2017_3H_b1']
+    for paper in papers:
+        data_df, meta_df = parse_paper(paper)
+        data_dfs.append(data_df)
+        meta_dfs.append(meta_df)
+    return data_dfs, meta_dfs
+
 def parse_paper(paper: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
     if paper == '2017_1H_b0':
-        exam_df, meta_df = parse_csv_b01(
+        exam_df, meta_df = parse_csv(
             "data/9to1_2017_GCSE_1H.csv",
             data_row_start=23,
             meta_rows=5,
             paper_columns=['Name'] + [f'q{i}' for i in range(1, 25)])
 
     elif paper == '2017_1H_b1':
-        exam_df, meta_df = parse_csv_b01(
+        exam_df, meta_df = parse_csv(
             "data/9to1_2017_GCSE_1H_and_2H_and_3H Linked Pinpoint Data_Cleaned.csv",
             data_row_start=6,
             meta_rows=5,
             paper_columns=['Name'] + [f'q{i}' for i in range(1, 25)])
 
     elif paper == '2017_2H_b1':
-        exam_df, meta_df = parse_csv_b01(
+        exam_df, meta_df = parse_csv(
             "data/9to1_2017_GCSE_1H_and_2H_and_3H Linked Pinpoint Data_Cleaned.csv",
             data_row_start=6,
             meta_rows=5,
             paper_columns=['Name.1'] + [f'q{i}.1' for i in range(1, 24)])
 
     elif paper == '2017_3H_b1':
-        exam_df, meta_df = parse_csv_b01(
+        exam_df, meta_df = parse_csv(
             "data/9to1_2017_GCSE_1H_and_2H_and_3H Linked Pinpoint Data_Cleaned.csv",
             data_row_start=6,
             meta_rows=5,
@@ -33,8 +54,8 @@ def parse_paper(paper: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
     return exam_df, meta_df
 
 
-# for files '9to1_2017_GCSE_1H.csv' and 'data/9to1_2017_GCSE_1H_and_2H_and_3H Linked Pinpoint Data_Cleaned.csv' only
-def parse_csv_b01(csv_name: str, data_row_start: int, meta_rows: int, paper_columns: List[str]) -> Tuple[pd.DataFrame, pd.DataFrame]:
+# for files '9to1_2017_GCSE_1H.csv' and '9to1_2017_GCSE_1H_and_2H_and_3H Linked Pinpoint Data_Cleaned.csv' only
+def parse_csv(csv_name: str, data_row_start: int, meta_rows: int, paper_columns: List[str]) -> Tuple[pd.DataFrame, pd.DataFrame]:
     '''
     returned exam_df has original row index retained which represents unique student id
     e.g. row index 6 -> student 6
