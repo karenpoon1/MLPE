@@ -1,11 +1,11 @@
-from src.utils.data_utils.parse_paper_b01 import parse_paper_b1
+from src.utils.data_utils.parse_paper_b01 import parse_paper_b0, parse_paper_b1
 from src.utils.data_utils.parse_paper_b2 import parse_paper_b2
 from src.utils.data_utils.process_paper import process_paper
 
-from src.split_train_test import split_train_test
-from src.split_val import split_val
+from src.utils.split_utils.split_train_test import split_train_test
+from src.utils.split_utils.split_val import split_val
 
-from src.split_config import default as split_params
+from src.config.split_config import default as split_params
 
 
 # parse paper
