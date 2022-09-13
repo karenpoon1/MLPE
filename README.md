@@ -21,10 +21,13 @@
 
 `selected_papers` is a list of integers representing exam papers selected to be processed, e.g. `[0, 1, 2]` represents exam paper 0, paper 1, and paper 2 are selected to be the input data for modelling
 
-## Split to train and test set
+## Split to train, test and validation set
     train_ts, test_ts = split_train_test(processed_data_df,
                                             split_params,
                                             {random_state})
+
+    train_ts, val_ts = split_val(train_ts,
+                                    split_params)
 
 `split_params` is a dictionary of parameters imported from and defined in `src/config/split_config.py`
 
