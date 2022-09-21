@@ -13,6 +13,7 @@ def parse_paper(paper_name):
         data_dfs, meta_dfs = parse_paper_b2()
     return data_dfs, meta_dfs
 
+
 def parse_paper_b0():
     csv_name = "data/9to1_2017_GCSE_1H.csv"
     paper1_columns = ['Name'] + [f'q{i}' for i in range(1, 25)]
