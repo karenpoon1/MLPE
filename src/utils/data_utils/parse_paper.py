@@ -15,7 +15,7 @@ def parse_paper(paper_name):
 
 
 def parse_paper_b0():
-    csv_name = "data/9to1_2017_GCSE_1H.csv"
+    csv_name = "data/real/9to1_2017_GCSE_1H.csv"
     paper1_columns = ['Name'] + [f'q{i}' for i in range(1, 25)]
     paper_columns_list = [paper1_columns]
     data_row_start = 23
@@ -24,7 +24,7 @@ def parse_paper_b0():
 
 
 def parse_paper_b1():
-    csv_name = "data/9to1_2017_GCSE_1H_and_2H_and_3H Linked Pinpoint Data_Cleaned.csv"
+    csv_name = "data/real/9to1_2017_GCSE_1H_and_2H_and_3H Linked Pinpoint Data_Cleaned.csv"
     paper1_columns = ['Name'] + [f'q{i}' for i in range(1, 25)]
     paper2_columns = ['Name.1'] + [f'q{i}.1' for i in range(1, 24)]
     paper3_columns = ['Name.2'] + [f'q{i}.2' for i in range(1, 24)]
@@ -55,8 +55,8 @@ def parse_paper_b01(csv_name, paper_columns_list, data_row_start, no_meta_rows):
 
 
 def parse_paper_b2():
-    data_csv_name = "data/Large Pinpoint Learning Data Set for Research.csv"
-    meta_csv_name = "data/Large Pinpoint Learning Data Set for Research meta.csv"
+    data_csv_name = "data/real/Large Pinpoint Learning Data Set for Research.csv"
+    meta_csv_name = "data/real/Large Pinpoint Learning Data Set for Research meta.csv"
 
     raw_data_df = pd.read_csv(data_csv_name, low_memory=False)
     raw_meta_df = pd.read_csv(meta_csv_name, low_memory=False)
