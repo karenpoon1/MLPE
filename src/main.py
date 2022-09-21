@@ -1,5 +1,3 @@
-import configparser
-
 from src.utils.data_utils.parse_paper import parse_paper
 from src.utils.data_utils.process_paper import process_paper
 
@@ -27,11 +25,9 @@ init_random_state = 1000
 path_to_folder = (f'results/dataset_{dataset}/paper{selected_papers[0]}-{selected_papers[-1]}_splitconfig{split_config}_random{split_random_state}\n'
                     f'/model{model_dimension}D2PL_modelconfig_{model_config}_stop{stop_method}_initRandom{init_random_state}/')
 
-# parse paper
-data_dfs, meta_dfs = parse_paper(dataset)
-
-# process paper
-processed_data_df, processed_meta_df = process_paper(data_dfs, meta_dfs, selected_papers=selected_papers)
+# Load data
+data_dfs, meta_dfs = parse_paper(dataset) # parse paper
+processed_data_df, processed_meta_df = process_paper(data_dfs, meta_dfs, selected_papers=selected_papers) # process paper
 data_dim = processed_data_df.shape
 
 # split to train test set
