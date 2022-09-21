@@ -1,9 +1,11 @@
 import torch
 import math
 import numpy as np
+import pandas as pd
 
 from src.models.IterativeModel import IterativeModel
 from src.utils.metric_utils.calc_metric import calc_acc
+from src.synthetic.LatentParams import LatentParams
 
 class M2PL(IterativeModel):
     def __init__(self, dimension):
@@ -11,7 +13,7 @@ class M2PL(IterativeModel):
         self.dimension = dimension
 
 
-    def train(self, train_ts, test_ts, val_ts, params_dim, 
+    def train(self, train_ts, test_ts, val_ts, data_dim, 
                 hyperparams, stop_method, step_size):
 
         rate, iters = hyperparams['rate'], hyperparams['iters']
@@ -21,7 +23,7 @@ class M2PL(IterativeModel):
         train_acc_arr, val_acc_arr, test_acc_arr = np.zeros(acc_arr_size), np.zeros(acc_arr_size), np.zeros(acc_arr_size)
 
         # Randomly initialise random student, question parameters
-        S, Q = params_dim[0], params_dim[1] # student param dimension; question param dimension
+        S, Q = data_dim[0], data_dim[1] # student param dimension; question param dimension
         print(S, Q)
         bs = torch.normal(mean=0, std=np.sqrt(1), size=(S, self.dimension+1), requires_grad=True, generator=self.rng) # std 1 for bs bq; std 0.0001 for xs xq
         bq = torch.normal(mean=0, std=np.sqrt(1), size=(Q, self.dimension+1), requires_grad=True, generator=self.rng)
@@ -141,3 +143,37 @@ class M2PL(IterativeModel):
         probit_correct = self.calc_probit(data_ts, params)
         predictions = (probit_correct>=0.5).float()
         return probit_correct, predictions
+
+
+    def synthesise_data(self, data_dim, latent_params: LatentParams, random_state):
+            rng = torch.Generator()
+            model_dim = self.dimension
+            S, Q = data_dim[0], data_dim[1]
+
+            rng.manual_seed(random_state)
+            bs = torch.normal(mean=latent_params.bs_mean, std=latent_params.bs_std, size=(S, 1), requires_grad=True, generator=rng)
+            bq = torch.normal(mean=latent_params.bq_mean, std=latent_params.bq_std, size=(Q, 1), requires_grad=True, generator=rng)
+
+            bs_matrix = torch.matmul(bs, torch.ones(1,Q))
+            bq_matrix = torch.matmul(bq, torch.ones(1,S)).T
+            sigmoid_arg = bs_matrix + bq_matrix
+
+            xs, xq = float('nan'), float('nan')
+            if model_dim > 0:
+                rng.manual_seed(random_state+1)
+                xs = torch.normal(mean=latent_params.xs_mean, std=latent_params.xs_std, size=(S, model_dim), requires_grad=True, generator=rng)
+                xq = torch.normal(mean=latent_params.xq_mean, std=latent_params.xq_std, size=(Q, model_dim), requires_grad=True, generator=rng)
+                int_matrix = torch.matmul(xs, xq.T)
+                sigmoid_arg = bs_matrix + bq_matrix + int_matrix
+                
+                bs = torch.concat([bs, xs], dim=1)
+                bq = torch.concat([bq, xq], dim=1)
+
+            probit_correct = torch.sigmoid(sigmoid_arg)
+            rng.manual_seed(random_state+2)
+            data_ts = torch.bernoulli(probit_correct, generator=rng)
+            
+            data_df = pd.DataFrame(data_ts.detach().numpy()).astype(float)
+            true_latents = {'bs': bs, 'bq': bq}
+
+            return data_df, true_latents
