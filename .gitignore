@@ -4,3 +4,5 @@ data/
 venv/
 DOC.md
 results/
+__pycache__/
+.python-version
