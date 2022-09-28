@@ -1,8 +1,7 @@
+from src.config.SplitParams import SplitParams
+
 split_config_dict = {
-    'default': {
-        'random_q_order': True,
-        'random_s_order': False,
-        'test_split': 0.2,
-        'val_split': 0.1
-    }
+    'default': SplitParams(),
+
+    'test': SplitParams(random_q_order=False)
 }

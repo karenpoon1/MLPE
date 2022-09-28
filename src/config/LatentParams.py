@@ -8,7 +8,7 @@ class LatentParams:
     bq_mean: float
     bq_std: float
 
-    xs_mean: int
+    xs_mean: float
     xs_std: float
     
     xq_mean: float

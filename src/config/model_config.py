@@ -1,6 +1,7 @@
+from src.config.ModelParams import ModelParams
+
 model_config_dict = {
-    'default':{
-        'rate': 0.00015,
-        'iters': 100
-    }
+    'default': ModelParams(),
+    
+    'test': ModelParams(iters=100, stop_method='nll')
 }

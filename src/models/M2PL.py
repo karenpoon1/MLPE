@@ -2,21 +2,25 @@ import torch
 import math
 import numpy as np
 import pandas as pd
+from src.config.ModelParams import ModelParams
+from src.config.LatentParams import LatentParams
 
 from src.models.IterativeModel import IterativeModel
 from src.utils.metric_utils.calc_metric import calc_acc
-from src.synthetic.LatentParams import LatentParams
 
 class M2PL(IterativeModel):
-    def __init__(self, dimension):
+    def __init__(self, dim):
         super().__init__()
-        self.dimension = dimension
+        self.dim = dim
 
 
     def train(self, train_ts, test_ts, val_ts, data_dim, 
-                hyperparams, stop_method, step_size):
+                hyperparams: ModelParams, step_size):
 
-        rate, iters = hyperparams['rate'], hyperparams['iters']
+        rate = hyperparams.rate
+        iters = hyperparams.iters
+        stop_method = hyperparams.stop_method
+        latent_params = hyperparams.latent_params
 
         acc_arr_size = math.ceil(iters/step_size)
         train_nll_arr, val_nll_arr, test_nll_arr = np.zeros(iters), np.zeros(acc_arr_size), np.zeros(acc_arr_size)
@@ -24,9 +28,8 @@ class M2PL(IterativeModel):
 
         # Randomly initialise random student, question parameters
         S, Q = data_dim[0], data_dim[1] # student param dimension; question param dimension
-        print(S, Q)
-        bs = torch.normal(mean=0, std=np.sqrt(1), size=(S, self.dimension+1), requires_grad=True, generator=self.rng) # std 1 for bs bq; std 0.0001 for xs xq
-        bq = torch.normal(mean=0, std=np.sqrt(1), size=(Q, self.dimension+1), requires_grad=True, generator=self.rng)
+        bs = torch.normal(mean=latent_params.bs_mean, std=latent_params.bs_std, size=(S, self.dim+1), requires_grad=True, generator=self.rng) # std 1 for bs bq; std 0.0001 for xs xq
+        bq = torch.normal(mean=latent_params.bq_mean, std=latent_params.bq_std, size=(Q, self.dim+1), requires_grad=True, generator=self.rng)
 
         last_epoch = iters
         prev_val = 0
@@ -113,7 +116,7 @@ class M2PL(IterativeModel):
         bs0_data = bs_data[:, 0]
         bq0_data = bq_data[:, 0]
 
-        if self.dimension == 0:
+        if self.dim == 0:
             probit_correct = torch.sigmoid(bs0_data + bq0_data)
         else:
             xs_data = bs_data[:, 1:]
@@ -128,7 +131,7 @@ class M2PL(IterativeModel):
         probit_correct = self.calc_probit(data_ts, params)
         nll = -torch.sum(torch.log(probit_correct**data_ts[0]) + torch.log((1-probit_correct)**(1-data_ts[0])))
         
-        if self.dimension > 0:
+        if self.dim > 0:
             # Regularise bq
             # xs = params['bs'][:, 1:]
             xq = params['bq'][:, 1:]
@@ -147,7 +150,7 @@ class M2PL(IterativeModel):
 
     def synthesise_data(self, data_dim, latent_params: LatentParams, random_state):
             rng = torch.Generator()
-            model_dim = self.dimension
+            model_dim = self.dim
             S, Q = data_dim[0], data_dim[1]
 
             rng.manual_seed(random_state)

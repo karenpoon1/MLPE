@@ -10,9 +10,9 @@ class IterativeModel:
         self.rng = torch.Generator()
 
 
-    def run(self, train_ts, test_ts, val_ts, params_dim,
-                hyperparams, stop_method, init_random_state,
-                step_size=25, plot=False, save=False):
+    def run(self, train_ts, test_ts, val_ts, data_dim,
+                hyperparams, init_random_state,
+                plot=False, save=False, step_size=25):
 
         '''
         if save == path_to_folder:
@@ -26,16 +26,15 @@ class IterativeModel:
 
         self.rng.manual_seed(init_random_state)
 
-        params, history, last_epoch = self.train(train_ts, test_ts, val_ts, params_dim,
-                                                    hyperparams, stop_method, step_size)
+        params, history, last_epoch = self.train(train_ts, test_ts, val_ts, data_dim,
+                                                    hyperparams, step_size)
 
         probabilities, predictions = self.predict(test_ts, params)
         performance = self.get_performance(test_ts, predictions, probabilities)
         correctness_ts = self.get_correctness(test_ts, predictions)
 
         info = {'history': history,
-                'model_info':{'hyperparams': hyperparams,                
-                                'stop_method': stop_method,
+                'model_info':{'hyperparams': hyperparams,
                                 'train_epoch': last_epoch,
                                 'init_random_state': init_random_state,
                                 'step_size': step_size},
@@ -118,11 +117,10 @@ class IterativeModel:
     def print_progress(self, epoch, train_nll, val_nll, test_nll, train_acc, val_acc, test_acc):
         dp = 3
         try:
-            print(f'epoch: {epoch} train: {round(train_nll.item())} {round(train_acc,dp)}; '
-                                f'val: {round(val_nll.item())} {round(val_acc,dp)}; '
-                                f'test: {round(test_nll.item())} {round(test_acc,dp)}')
+            train_nll, train_acc = round(train_nll.item()), round(train_acc,dp)
+            val_nll, val_acc = round(val_nll.item()), round(val_acc,dp)
+            test_nll, test_acc = round(test_nll.item()), round(test_acc,dp)
         except:
             print('NULL value')
-            print(f'epoch: {epoch} train: {train_nll} {train_acc}; '
-                                f'val: {val_nll} {val_acc}; '
-                                f'test: {test_nll} {test_acc}')
+        finally:
+            print(f"epoch: {epoch:<5} train: {train_nll:<2} {train_acc:<8} val: {val_nll:<2} {val_acc:<8} test: {test_nll:<2} {test_acc:<8}")
