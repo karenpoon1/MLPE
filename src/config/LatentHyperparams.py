@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 @dataclass
-class LatentParams:
+class LatentHyperparams:
     bs_mean: float
     bs_std: float
     

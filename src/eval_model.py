@@ -1,29 +1,44 @@
-from src.config.SplitParams import SplitParams
-from src.config.ModelParams import ModelParams
+from src.config.split_config import split_config_dict
+from src.config.model_config import model_config_dict
+
+from src.utils.data_utils.parse_paper import parse_paper
+from src.utils.data_utils.process_paper import process_paper
 
 from src.utils.split_utils.split_train_test import split_train_test
 from src.utils.split_utils.split_val import split_val
 
-from src.models.M2PL import M2PL
 
-def eval_M2PL_model(model_dim: int, data_df, split_params: SplitParams, split_random_state: int,
-                    hyperparams: ModelParams, init_random_state: int,
-                    plot=False, save=False, step_size=25):
+def eval_model(dataset, selected_papers,
+         split_config, split_seed,
+         model, model_config, init_seed,
+         plot, save, step_size=25):
 
-    # split to train test set
-    train_ts, test_ts = split_train_test(data_df,
-                                            split_params,
-                                            split_random_state)
+    data_df, meta_df = load_data(dataset, selected_papers)
+    train_ts, test_ts, val_ts = split_data(data_df, split_config, split_seed)
+    return fit_model(train_ts, test_ts, val_ts, data_df.shape,
+                    model, model_config, init_seed,
+                    plot, save, step_size)
 
-    # split val set
-    train_ts, val_ts = split_val(train_ts,
-                                    split_params)
 
-    # run model
-    my_model = M2PL(dim=model_dim)
-    data_dim = data_df.shape
-    res = my_model.run(train_ts, test_ts, val_ts, data_dim,
-                            hyperparams, init_random_state,
-                            plot, save, step_size)
+def load_data(dataset, selected_papers):
+    data_dfs, meta_dfs = parse_paper(dataset) # parse paper
+    data_df, meta_df = process_paper(data_dfs, meta_dfs, selected_papers=selected_papers) # process paper
+    return data_df, meta_df
 
-    return res
+
+def split_data(data_df, split_config, split_seed):
+    split_params = split_config_dict[split_config]
+
+    train_ts, test_ts = split_train_test(data_df, split_params, split_seed)
+    train_ts, val_ts = split_val(train_ts, split_params)
+    return train_ts, test_ts, val_ts
+
+
+def fit_model(train_ts, test_ts, val_ts, data_dim,
+               model, model_config, init_seed,
+               plot=False, save=False, step_size=25):
+    
+    hyperparams = model_config_dict[model_config]
+    return model.run(train_ts, test_ts, val_ts, data_dim,
+                     hyperparams, init_seed,
+                     plot, save, step_size)

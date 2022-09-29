@@ -2,25 +2,25 @@ import torch
 import math
 import numpy as np
 import pandas as pd
-from src.config.ModelParams import ModelParams
-from src.config.LatentParams import LatentParams
+from src.config.ModelHyperparams import ModelHyperparams
+from src.config.LatentHyperparams import LatentHyperparams
 
 from src.models.IterativeModel import IterativeModel
 from src.utils.metric_utils.calc_metric import calc_acc
 
 class M2PL(IterativeModel):
-    def __init__(self, dim):
+    def __init__(self, dim=0):
         super().__init__()
         self.dim = dim
 
 
     def train(self, train_ts, test_ts, val_ts, data_dim, 
-                hyperparams: ModelParams, step_size):
+              hyperparams: ModelHyperparams, step_size):
 
         rate = hyperparams.rate
         iters = hyperparams.iters
         stop_method = hyperparams.stop_method
-        latent_params = hyperparams.latent_params
+        latent_hyperparams = hyperparams.latent_hyperparams
 
         acc_arr_size = math.ceil(iters/step_size)
         train_nll_arr, val_nll_arr, test_nll_arr = np.zeros(iters), np.zeros(acc_arr_size), np.zeros(acc_arr_size)
@@ -28,8 +28,8 @@ class M2PL(IterativeModel):
 
         # Randomly initialise random student, question parameters
         S, Q = data_dim[0], data_dim[1] # student param dimension; question param dimension
-        bs = torch.normal(mean=latent_params.bs_mean, std=latent_params.bs_std, size=(S, self.dim+1), requires_grad=True, generator=self.rng) # std 1 for bs bq; std 0.0001 for xs xq
-        bq = torch.normal(mean=latent_params.bq_mean, std=latent_params.bq_std, size=(Q, self.dim+1), requires_grad=True, generator=self.rng)
+        bs = torch.normal(mean=latent_hyperparams.bs_mean, std=latent_hyperparams.bs_std, size=(S, self.dim+1), requires_grad=True, generator=self.rng) # std 1 for bs bq; std 0.0001 for xs xq
+        bq = torch.normal(mean=latent_hyperparams.bq_mean, std=latent_hyperparams.bq_std, size=(Q, self.dim+1), requires_grad=True, generator=self.rng)
 
         last_epoch = iters
         prev_val = 0
@@ -148,14 +148,16 @@ class M2PL(IterativeModel):
         return probit_correct, predictions
 
 
-    def synthesise_data(self, data_dim, latent_params: LatentParams, random_state):
+
+
+    def synthesise_data(self, data_dim, latent_hyperparams: LatentHyperparams, random_state):
             rng = torch.Generator()
             model_dim = self.dim
             S, Q = data_dim[0], data_dim[1]
 
             rng.manual_seed(random_state)
-            bs = torch.normal(mean=latent_params.bs_mean, std=latent_params.bs_std, size=(S, 1), requires_grad=True, generator=rng)
-            bq = torch.normal(mean=latent_params.bq_mean, std=latent_params.bq_std, size=(Q, 1), requires_grad=True, generator=rng)
+            bs = torch.normal(mean=latent_hyperparams.bs_mean, std=latent_hyperparams.bs_std, size=(S, 1), requires_grad=True, generator=rng)
+            bq = torch.normal(mean=latent_hyperparams.bq_mean, std=latent_hyperparams.bq_std, size=(Q, 1), requires_grad=True, generator=rng)
 
             bs_matrix = torch.matmul(bs, torch.ones(1,Q))
             bq_matrix = torch.matmul(bq, torch.ones(1,S)).T
@@ -164,8 +166,8 @@ class M2PL(IterativeModel):
             xs, xq = float('nan'), float('nan')
             if model_dim > 0:
                 rng.manual_seed(random_state+1)
-                xs = torch.normal(mean=latent_params.xs_mean, std=latent_params.xs_std, size=(S, model_dim), requires_grad=True, generator=rng)
-                xq = torch.normal(mean=latent_params.xq_mean, std=latent_params.xq_std, size=(Q, model_dim), requires_grad=True, generator=rng)
+                xs = torch.normal(mean=latent_hyperparams.xs_mean, std=latent_hyperparams.xs_std, size=(S, model_dim), requires_grad=True, generator=rng)
+                xq = torch.normal(mean=latent_hyperparams.xq_mean, std=latent_hyperparams.xq_std, size=(Q, model_dim), requires_grad=True, generator=rng)
                 int_matrix = torch.matmul(xs, xq.T)
                 sigmoid_arg = bs_matrix + bq_matrix + int_matrix
                 

@@ -1,7 +1,7 @@
-from src.config.ModelParams import ModelParams
+from src.config.ModelHyperparams import ModelHyperparams
 
 model_config_dict = {
-    'default': ModelParams(),
+    'default': ModelHyperparams(),
     
-    'test': ModelParams(iters=100, stop_method='nll')
+    'test': ModelHyperparams(iters=100, stop_method='nll')
 }
