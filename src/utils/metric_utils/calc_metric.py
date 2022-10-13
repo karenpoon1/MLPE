@@ -39,7 +39,7 @@ def calc_rmse(true: torch.Tensor, predictions: torch.Tensor):
     return torch.sqrt(torch.sum(torch.square(error))/no_entries)
 
 
-def calc_q_acc(data_ts, predictions, q_id_ts):
+def calc_q_acc(data_ts, predictions, q_id_ts, plot=False):
     acc_dict = {}
     unique_q = torch.unique(q_id_ts) # return tensor of unique question id
     correctness = torch.eq(data_ts, predictions) # return correctness of each entry
@@ -48,6 +48,11 @@ def calc_q_acc(data_ts, predictions, q_id_ts):
         correctness_i = torch.index_select(correctness, 0, index_i) # return tensor of data entries concerning question i
         acc_i = torch.sum(correctness_i) / torch.numel(correctness_i)
         acc_dict[i.item()] = round(float(acc_i)*100, 3)
+    if plot:
+        plt.title('Accuracy for each question')
+        plt.xlabel('question id')
+        plt.plot(acc_dict.keys(), acc_dict.values())
+        plt.show()
     return acc_dict
 
 

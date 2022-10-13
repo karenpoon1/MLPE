@@ -1,5 +1,4 @@
 import unittest
-import pandas as pd
 import torch
 
 from src.utils.metric_utils.calc_metric import calc_acc, calc_conf_matrix, calc_prec_recall, calc_rmse, calc_q_acc, calc_s_acc
@@ -76,7 +75,6 @@ class TestCalcMetric(unittest.TestCase):
             4: round((1/1)*100, 3),
             5: round((1/2)*100, 3)
         }
-
         self.assertEqual(q_acc, true_q_acc)
 
 
