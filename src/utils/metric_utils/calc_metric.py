@@ -49,14 +49,14 @@ def calc_q_acc(data_ts, predictions, q_id_ts, plot=False):
         acc_i = torch.sum(correctness_i) / torch.numel(correctness_i)
         acc_dict[i.item()] = round(float(acc_i)*100, 3)
     if plot:
-        plt.title('Accuracy for each question')
-        plt.xlabel('question id')
+        plt.title('Model accuracy for each question')
+        plt.xlabel('Question id')
         plt.plot(acc_dict.keys(), acc_dict.values())
         plt.show()
     return acc_dict
 
 
-def calc_s_acc(data_ts, predictions, s_id_ts):
+def calc_s_acc(data_ts, predictions, s_id_ts, plot=False):
     acc_dict = {}
     unique_s = torch.unique(s_id_ts) # return tensor of unique question id
     correctness = torch.eq(data_ts, predictions) # return correctness of each entry
@@ -65,4 +65,10 @@ def calc_s_acc(data_ts, predictions, s_id_ts):
         correctness_i = torch.index_select(correctness, 0, index_i) # return tensor of data entries concerning question i
         acc_i = torch.sum(correctness_i) / torch.numel(correctness_i)
         acc_dict[i.item()] = round(float(acc_i)*100, 3)
+    if plot:
+        plt.title('Histogram of model accuracy for each student')
+        plt.xlabel('Accuracy')
+        plt.ylabel('No. of students')
+        plt.hist(acc_dict.values())
+        plt.show()
     return acc_dict

@@ -77,8 +77,27 @@ class TestCalcMetric(unittest.TestCase):
         }
         self.assertEqual(q_acc, true_q_acc)
 
+    
+    def test_calc_s_acc(self):
+        # Testcase
+        data_ts = torch.tensor([0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0])
+        s_id_ts = torch.tensor([0, 1, 5, 2, 4, 2, 3, 5, 2, 3])
+        predictions = torch.tensor([0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0])
+        s_acc = calc_s_acc(data_ts, predictions, s_id_ts)
 
-#TODO: test for calc_s_acc functions
+        # True
+        true_s_acc = {
+            0: round((1/1)*100, 3),
+            1: round((1/1)*100, 3),
+            2: round((2/3)*100, 3),
+            3: round((0/2)*100, 3),
+            4: round((1/1)*100, 3),
+            5: round((1/2)*100, 3)
+        }
+        print(true_s_acc)
+        self.assertEqual(s_acc, true_s_acc)
+
+        #TODO: more testcases for test_calc_s_acc()
 
 
 if __name__ == '__main__':
