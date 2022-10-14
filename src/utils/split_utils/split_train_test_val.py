@@ -7,8 +7,8 @@ from src.utils.split_utils.split_ts import split_ts
 
 
 def split_train_test(data_df, split_params: SplitParams, random_state=1000):
-    if split_params.random_q_order:
-        data_df = shuffle_cols(data_df, shuffle_seed=random_state, reset_index=False) # shuffle question order
+    # if split_params.random_q_order:
+    #     data_df = shuffle_cols(data_df, shuffle_seed=random_state, reset_index=False) # shuffle question order
     # if split_params.random_s_order:
     #     data_df = shuffle_rows(data_df, shuffle_seed=random_state, reset_index=False) # shuffle student order
 
