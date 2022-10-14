@@ -1,33 +1,30 @@
-from src.utils.data_utils.parse_paper import parse_paper
-from src.utils.data_utils.process_paper import process_paper
+from src.models.M2PL import M2PL
+from src.eval_model import eval_model
+from src.print_info import print_info
 
-from src.config.split_config import split_config_dict
-from src.config.model_config import model_config_dict
+# Variables
+DATASET = 'b1'
+SELECTED_PAPERS = [0]
 
-from src.eval_model import eval_M2PL_model
+SPLIT_CONFIG = 'default'
+SPLIT_SEED = 1000
 
-# Load data
-dataset = 'b1'
-selected_papers = [0]
-data_dfs, meta_dfs = parse_paper(dataset) # parse paper
-data_df, meta_df = process_paper(data_dfs, meta_dfs, selected_papers=selected_papers) # process paper
-
-
-# Define variables
-split_config = 'default'
-split_random_state = 1000
-
-model_dim = 0
-model_config = 'test'
-init_random_state = 1000
+MODEL_DIM = 1
+MODEL_CONFIG = 'default'
+INIT_SEED = 1000
+PLOT = True
 
 # Folder name to save results
-path_to_folder = (f'results/dataset_{dataset}/Paper{selected_papers[0]}-{selected_papers[-1]}/SplitConfig_{split_config}__Random{split_random_state}/Model{model_dim}D2PL__ModelConfig_{model_config}__InitRandom{init_random_state}/')
+selected_papers_str = '_'.join(map(str, SELECTED_PAPERS))
+save_dir = f'results/Dataset_{DATASET}__Paper{selected_papers_str}/SplitConfig_{SPLIT_CONFIG}__Random{SPLIT_SEED}/Model{MODEL_DIM}D2PL__ModelConfig_{MODEL_CONFIG}__InitRandom{INIT_SEED}/'
 
 # Evaluate model
-split_params = split_config_dict[split_config]
-hyperparams = model_config_dict[model_config]
-res = eval_M2PL_model(model_dim, data_df, split_params, split_random_state, 
-                hyperparams, init_random_state, plot=False, save=path_to_folder)
+my_model = M2PL(MODEL_DIM)
+info = eval_model(DATASET, SELECTED_PAPERS,
+                 SPLIT_CONFIG, SPLIT_SEED,
+                 my_model, MODEL_CONFIG, INIT_SEED,
+                 PLOT, False)
+print(info['results']['performance']['acc'])
+print(info['results']['performance']['conf'])
 
-print(res['results']['performance']['acc'])
+# print_info(save_dir)

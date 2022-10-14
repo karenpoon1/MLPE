@@ -1,71 +1,63 @@
 import torch
-
-from src.config.split_config import split_config_dict
-from src.config.model_config import model_config_dict
-
-from src.synthetic.SyntheticParams import SyntheticParams
-
-from src.utils.split_utils.split_train_test import split_train_test
-from src.utils.split_utils.split_val import split_val
+from src.config.LatentParams import LatentParams
 
 from src.models.M2PL import M2PL
-from src.eval_model import eval_M2PL_model
+from src.synthetic.synth_data import synth_data
 
-from src.utils.metric_utils.calc_metric import calc_acc, calc_conf_matrix
+from src.eval_model import split_data, fit_model
+from src.utils.metric_utils.calc_metric import calc_acc
+from src.config.latent_hyperparams_config import latent_config_dict
 
-# Load synthetic data
-synthetic_params = SyntheticParams(model_dim=1, data_dim=[5000, 200],
-                        latent_config='int_latent_params_8', random_state=1200)
-
-synthetic_data = torch.load(synthetic_params.get_data_path() + 'data.pt')
-data_df, true_latents = synthetic_data['data_df'], synthetic_data['true_latents']
+from src.print_info import print_info
 
 
-# Define run variables
-split_config = 'default'
-split_random_state = 1300
+# Variables for synthetic data
+DATA_DIM = [5000, 200]
+LATENT_HYPERPARAMS_CONFIG = 'int_latent_params_8'
+INIT_SEED = 1200
+SYNTH_SEED = 1200
+MODEL_DIM = 1
 
-model_dim = 0
-model_config = 'default'
-init_random_state = 1300
+synth_model = M2PL(MODEL_DIM)
+data_folder = f'Model{MODEL_DIM}D2PL__S{DATA_DIM[0]}Q{DATA_DIM[1]}__LatentConfig_{LATENT_HYPERPARAMS_CONFIG}__InitSeed{INIT_SEED}__SynthSeed{SYNTH_SEED}'
+data_dir = f'src/synthetic/data/{data_folder}/'
 
-results_folder_name = f'SplitConfig_{split_config}__Random{split_random_state}/Model{model_dim}D2PL__ModelConfig_{model_config}__InitRandom{init_random_state}'
+# Retrieve or generate synthetic data
+try:
+    synthetic_data = torch.load(data_dir + 'data.pt')
+    synthetic_df, latents_dict = synthetic_data['data_df'], synthetic_data['latents']
+    latents = LatentParams.return_obj(latents_dict)
 
-# Get params
-split_params = split_config_dict[split_config]
-hyperparams = model_config_dict[model_config]
-
-# split to train test set
-train_ts, test_ts = split_train_test(data_df,
-                                        split_params,
-                                        split_random_state)
-
-# split val set
-train_ts, val_ts = split_val(train_ts,
-                                split_params)
+except:
+    latent_hyperparams = latent_config_dict[LATENT_HYPERPARAMS_CONFIG]
+    synthetic_df, latents = synth_model.synthesise_from_hyperparams(DATA_DIM, latent_hyperparams, INIT_SEED, SYNTH_SEED, data_dir)
 
 
-# eval model
-my_model = M2PL(dim=model_dim)
-data_dim = data_df.shape
+# Variables for evaluating model
+SPLIT_CONFIG = 'default'
+SPLIT_SEED = 1300
 
+MODEL_DIM = 1
+MODEL_CONFIG = 'default'
+INIT_SEED = 1300
 
-# Prediction with true latents
-probit_correct, thres_predictions_ts = my_model.predict(test_ts, true_latents)
+results_dir = f'{data_dir}results/SplitConfig_{SPLIT_CONFIG}__SplitSeed{SPLIT_SEED}/Model{MODEL_DIM}D2PL__ModelConfig_{MODEL_CONFIG}__InitSeed{INIT_SEED}/'
+
+# Split data
+train_ts, test_ts, val_ts = split_data(synthetic_df, SPLIT_CONFIG, SPLIT_SEED)
+
+# Evaluate model
+my_model = M2PL(MODEL_DIM)
+
+# Predictions with ground truth latents
+probit_correct, thres_predictions_ts = my_model.predict(test_ts, latents.get_simplified_dict())
 acc = calc_acc(test_ts[0], thres_predictions_ts)
-conf_matrix = calc_conf_matrix(test_ts[0], thres_predictions_ts)
-print(acc)
-print(conf_matrix)
+print(f'Predictions from ground truth latents - Accuracy: {acc}')
 
-
-print('\nafter training\n')
-
-
-# fit model
-data_folder = synthetic_params.get_data_path()
-results_path = f'{data_folder}/results/{results_folder_name}/'
-res = my_model.run(train_ts, test_ts, val_ts, data_dim,
-                        hyperparams, init_random_state,
-                        plot=True, save=results_path)
-                        
-print(res['results']['performance']['acc'])
+# Predictions after training
+res = fit_model(train_ts, test_ts, val_ts, synthetic_df.shape,
+                my_model, MODEL_CONFIG, INIT_SEED,
+                plot=True, save=False)
+acc = res['results']['performance']['acc']
+print(f'After training - Accuracy: {acc}')
+# print_info(results_dir)
