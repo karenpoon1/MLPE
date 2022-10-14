@@ -27,7 +27,7 @@ class IterativeModel:
         self.rng.manual_seed(init_random_state)
 
         params, history, last_epoch = self.train(train_ts, test_ts, val_ts, data_dim,
-                                                    hyperparams, step_size)
+                                                    hyperparams, init_random_state, step_size)
 
         probabilities, predictions = self.predict(test_ts, params)
         performance = self.get_performance(test_ts, predictions, probabilities)

@@ -1,9 +1,12 @@
+import os
 import torch
 import math
 import numpy as np
 import pandas as pd
+
 from src.config.ModelHyperparams import ModelHyperparams
 from src.config.LatentHyperparams import LatentHyperparams
+from src.config.LatentParams import LatentParams
 
 from src.models.IterativeModel import IterativeModel
 from src.utils.metric_utils.calc_metric import calc_acc
@@ -15,7 +18,7 @@ class M2PL(IterativeModel):
 
 
     def train(self, train_ts, test_ts, val_ts, data_dim, 
-              hyperparams: ModelHyperparams, step_size):
+              hyperparams: ModelHyperparams, init_random_state, step_size):
 
         rate = hyperparams.rate
         iters = hyperparams.iters
@@ -27,9 +30,11 @@ class M2PL(IterativeModel):
         train_acc_arr, val_acc_arr, test_acc_arr = np.zeros(acc_arr_size), np.zeros(acc_arr_size), np.zeros(acc_arr_size)
 
         # Randomly initialise random student, question parameters
-        S, Q = data_dim[0], data_dim[1] # student param dimension; question param dimension
-        bs = torch.normal(mean=latent_hyperparams.bs_mean, std=latent_hyperparams.bs_std, size=(S, self.dim+1), requires_grad=True, generator=self.rng) # std 1 for bs bq; std 0.0001 for xs xq
-        bq = torch.normal(mean=latent_hyperparams.bq_mean, std=latent_hyperparams.bq_std, size=(Q, self.dim+1), requires_grad=True, generator=self.rng)
+        latents = self.init_latents(data_dim, latent_hyperparams, init_random_state)
+        bs, bq = latents.bs, latents.bq
+
+        bs.requires_grad = True
+        bq.requires_grad = True
 
         last_epoch = iters
         prev_val = 0
@@ -43,9 +48,6 @@ class M2PL(IterativeModel):
             train_nll.backward()
             
             if epoch % step_size == 0:
-                # print(epoch, bs[:10])
-                # print(epoch, bq[:10])
-
                 bs_history.append(torch.clone(bs[:10]))
                 bq_history.append(torch.clone(bq[:10]))
             
@@ -148,37 +150,49 @@ class M2PL(IterativeModel):
         return probit_correct, predictions
 
 
+    def init_latents(self, data_dim, latent_hyperparams: LatentHyperparams, random_state) -> LatentParams:
+        self.rng.manual_seed(random_state)
+        
+        S, Q = data_dim[0], data_dim[1] # student param dimension; question param dimension
+        bs0 = torch.normal(mean=latent_hyperparams.bs_mean, std=latent_hyperparams.bs_std, size=(S, 1), generator=self.rng) # std 1 for bs bq; std 0.0001 for xs xq
+        bq0 = torch.normal(mean=latent_hyperparams.bq_mean, std=latent_hyperparams.bq_std, size=(Q, 1), generator=self.rng)
+        latents = LatentParams(bs0, bq0)
+
+        if self.dim > 0:
+            self.rng.manual_seed(random_state+1)
+            xs = torch.normal(mean=latent_hyperparams.xs_mean, std=latent_hyperparams.xs_std, size=(S, self.dim), generator=self.rng)
+            xq = torch.normal(mean=latent_hyperparams.xq_mean, std=latent_hyperparams.xq_std, size=(Q, self.dim), generator=self.rng)
+            latents = LatentParams(bs0, bq0, xs, xq)
+        return latents
 
 
-    def synthesise_data(self, data_dim, latent_hyperparams: LatentHyperparams, random_state):
-            rng = torch.Generator()
-            model_dim = self.dim
-            S, Q = data_dim[0], data_dim[1]
+    def synthesise_from_latents(self, latents: LatentParams, synth_seed) -> pd.DataFrame:
+        S, Q = latents.bs0.shape[0], latents.bq0.shape[0]
 
-            rng.manual_seed(random_state)
-            bs = torch.normal(mean=latent_hyperparams.bs_mean, std=latent_hyperparams.bs_std, size=(S, 1), requires_grad=True, generator=rng)
-            bq = torch.normal(mean=latent_hyperparams.bq_mean, std=latent_hyperparams.bq_std, size=(Q, 1), requires_grad=True, generator=rng)
+        bs0_matrix = torch.matmul(latents.bs0, torch.ones(1,Q))
+        bq0_matrix = torch.matmul(latents.bq0, torch.ones(1,S)).T
+        sigmoid_arg = bs0_matrix + bq0_matrix
 
-            bs_matrix = torch.matmul(bs, torch.ones(1,Q))
-            bq_matrix = torch.matmul(bq, torch.ones(1,S)).T
-            sigmoid_arg = bs_matrix + bq_matrix
+        if self.dim > 0:
+            int_matrix = torch.matmul(latents.xs, latents.xq.T)
+            sigmoid_arg = bs0_matrix + bq0_matrix + int_matrix
 
-            xs, xq = float('nan'), float('nan')
-            if model_dim > 0:
-                rng.manual_seed(random_state+1)
-                xs = torch.normal(mean=latent_hyperparams.xs_mean, std=latent_hyperparams.xs_std, size=(S, model_dim), requires_grad=True, generator=rng)
-                xq = torch.normal(mean=latent_hyperparams.xq_mean, std=latent_hyperparams.xq_std, size=(Q, model_dim), requires_grad=True, generator=rng)
-                int_matrix = torch.matmul(xs, xq.T)
-                sigmoid_arg = bs_matrix + bq_matrix + int_matrix
-                
-                bs = torch.concat([bs, xs], dim=1)
-                bq = torch.concat([bq, xq], dim=1)
+        probit_correct = torch.sigmoid(sigmoid_arg)
+        self.rng.manual_seed(synth_seed+2)
+        data_ts = torch.bernoulli(probit_correct, generator=self.rng)
+        
+        data_df = pd.DataFrame(data_ts.detach().numpy()).astype(float)
+        return data_df
 
-            probit_correct = torch.sigmoid(sigmoid_arg)
-            rng.manual_seed(random_state+2)
-            data_ts = torch.bernoulli(probit_correct, generator=rng)
-            
-            data_df = pd.DataFrame(data_ts.detach().numpy()).astype(float)
-            true_latents = {'bs': bs, 'bq': bq}
 
-            return data_df, true_latents
+    def synthesise_from_hyperparams(self, data_dim, latent_hyperparams, init_seed, synth_seed, save_dir=False):
+        latents = self.init_latents(data_dim, latent_hyperparams, init_seed)
+        data_df = self.synthesise_from_latents(latents, synth_seed)
+        
+        data_info = {'data_df': data_df, 'latents': latents.get_simplified_dict()}
+        if save_dir:
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+            torch.save(data_info, save_dir + 'data.pt')
+    
+        return data_df, latents
