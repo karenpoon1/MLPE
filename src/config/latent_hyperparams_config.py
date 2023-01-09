@@ -1,6 +1,8 @@
-from src.config.LatentHyperparams import LatentHyperparams
+from src.config.dataclasses.LatentHyperparams import LatentHyperparams
 
 latent_config_dict = {
+    'default': LatentHyperparams(0, 1, 0, 1, 0, 1, 0, 1),
+    
     'AD_latent_params_1': LatentHyperparams(0, 1, 0, 1, float('nan'), float('nan'), float('nan'), float('nan')),
     
     'AD_latent_params_2': LatentHyperparams(0, 1, -3, 1, float('nan'), float('nan'), float('nan'), float('nan')),

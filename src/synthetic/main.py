@@ -2,7 +2,6 @@ import torch
 from src.config.LatentParams import LatentParams
 
 from src.models.M2PL import M2PL
-from src.synthetic.synth_data import synth_data
 
 from src.eval_model import split_data, fit_model
 from src.utils.metric_utils.calc_metric import calc_acc
@@ -24,11 +23,18 @@ data_dir = f'src/synthetic/data/{data_folder}/'
 
 # Retrieve or generate synthetic data
 try:
+    # Retrieve
     synthetic_data = torch.load(data_dir + 'data.pt')
     synthetic_df, latents_dict = synthetic_data['data_df'], synthetic_data['latents']
     latents = LatentParams.return_obj(latents_dict)
 
+    # Retrieve estimated latents
+    # info = torch.load(target_dir + 'info.pt')
+    # latents_dict = info['results']['params']
+    # latents = LatentParams.return_obj(latents_dict)
+
 except:
+    # Generate
     latent_hyperparams = latent_config_dict[LATENT_HYPERPARAMS_CONFIG]
     synthetic_df, latents = synth_model.synthesise_from_hyperparams(DATA_DIM, latent_hyperparams, INIT_SEED, SYNTH_SEED, data_dir)
 

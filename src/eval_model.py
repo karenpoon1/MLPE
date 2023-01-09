@@ -36,7 +36,7 @@ def split_data(data_df, split_config, split_seed):
 def fit_model(train_ts, test_ts, val_ts, data_dim,
                model, model_config, init_seed,
                plot=False, save=False, step_size=25):
-    
+
     hyperparams = model_config_dict[model_config]
     return model.run(train_ts, test_ts, val_ts, data_dim,
                      hyperparams, init_seed,

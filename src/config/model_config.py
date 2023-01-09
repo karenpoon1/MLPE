@@ -1,4 +1,4 @@
-from src.config.ModelHyperparams import ModelHyperparams
+from src.config.dataclasses.ModelHyperparams import ModelHyperparams
 
 model_config_dict = {
     'default': ModelHyperparams(),
