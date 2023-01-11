@@ -4,9 +4,9 @@ import math
 import numpy as np
 import pandas as pd
 
-from src.config.ModelHyperparams import ModelHyperparams
-from src.config.LatentHyperparams import LatentHyperparams
-from src.config.LatentParams import LatentParams
+from src.config.dataclasses.ModelHyperparams import ModelHyperparams
+from src.config.dataclasses.LatentHyperparams import LatentHyperparams
+from src.config.dataclasses.LatentParams import LatentParams
 
 from src.models.IterativeModel import IterativeModel
 from src.utils.metric_utils.calc_metric import calc_acc

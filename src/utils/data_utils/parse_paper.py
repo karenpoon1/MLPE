@@ -55,7 +55,7 @@ def parse_paper_b01(csv_name, paper_columns_list, data_row_start, no_meta_rows):
 
 
 def parse_paper_b2():
-    data_csv_name = "data/Large Pinpoint Learning Data Set for Research.csv"
+    data_csv_name = "data/Large Pinpoint Learning Data Set for Research.csv" #13 papers in total
     meta_csv_name = "data/Large Pinpoint Learning Data Set for Research meta.csv"
 
     raw_data_df = pd.read_csv(data_csv_name, low_memory=False)

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from typing import Literal
-from src.config.LatentHyperparams import LatentHyperparams
+from src.config.dataclasses.LatentHyperparams import LatentHyperparams
 from src.config.latent_hyperparams_config import latent_config_dict
 
 @dataclass
