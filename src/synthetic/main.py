@@ -1,5 +1,5 @@
 import torch
-from src.config.LatentParams import LatentParams
+from src.config.dataclasses.LatentParams import LatentParams
 
 from src.models.M2PL import M2PL
 
@@ -28,11 +28,6 @@ try:
     synthetic_df, latents_dict = synthetic_data['data_df'], synthetic_data['latents']
     latents = LatentParams.return_obj(latents_dict)
 
-    # Retrieve estimated latents
-    # info = torch.load(target_dir + 'info.pt')
-    # latents_dict = info['results']['params']
-    # latents = LatentParams.return_obj(latents_dict)
-
 except:
     # Generate
     latent_hyperparams = latent_config_dict[LATENT_HYPERPARAMS_CONFIG]
@@ -55,7 +50,7 @@ train_ts, test_ts, val_ts = split_data(synthetic_df, SPLIT_CONFIG, SPLIT_SEED)
 # Evaluate model
 my_model = M2PL(MODEL_DIM)
 
-# Predictions with ground truth latents
+# Predictions with ground truth latents (latents is the ground truth latents)
 probit_correct, thres_predictions_ts = my_model.predict(test_ts, latents.get_simplified_dict())
 acc = calc_acc(test_ts[0], thres_predictions_ts)
 print(f'Predictions from ground truth latents - Accuracy: {acc}')
@@ -63,7 +58,7 @@ print(f'Predictions from ground truth latents - Accuracy: {acc}')
 # Predictions after training
 res = fit_model(train_ts, test_ts, val_ts, synthetic_df.shape,
                 my_model, MODEL_CONFIG, INIT_SEED,
-                plot=True, save=False)
+                plot=True, save=results_dir)
 acc = res['results']['performance']['acc']
 print(f'After training - Accuracy: {acc}')
 # print_info(results_dir)
